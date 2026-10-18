@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>WorkMami · WorkBuddy 多账号管理与本地反代工具</title>
+<meta name="description" content="WorkMami：WorkBuddy 多账号管理、本地反代、批量签到、猫猫旅行托管与 Token 看板，一站式稳稳接住你。支持 macOS（Apple 芯片 / Intel）与 Windows。" />
+<style>
+  :root{
+    --bg:#0b0b0f; --bg2:#101018; --card:#15151d; --line:rgba(255,255,255,.08);
+    --txt:#e7e7ea; --sub:#9a9aa3; --faint:#6a6a73;
+    --brand1:#ec4899; --brand2:#f472b6; --brand3:#fb7185;
+    --ok:#34d399; --warn:#fbbf24; --danger:#fb7185;
+    --maxw:1120px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    background:var(--bg); color:var(--txt); line-height:1.7; -webkit-font-smoothing:antialiased;
+    background-image:radial-gradient(900px 500px at 80% -10%,rgba(236,72,153,.18),transparent 60%),
+                     radial-gradient(700px 400px at 0% 10%,rgba(244,114,182,.10),transparent 55%);
+    background-attachment:fixed;
+  }
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 22px}
+  .brand{background:linear-gradient(95deg,var(--brand1) 0%,var(--brand2) 55%,var(--brand3) 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;font-weight:800}
+  .badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--sub);
+    border:1px solid var(--line);border-radius:999px;padding:4px 12px;background:rgba(255,255,255,.03)}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok)}
+
+  /* nav */
+  header.nav{position:sticky;top:0;z-index:50;backdrop-filter:saturate(160%) blur(12px);
+    background:rgba(11,11,15,.72);border-bottom:1px solid var(--line)}
+  .nav-inner{display:flex;align-items:center;justify-content:space-between;height:64px}
+  .logo{display:flex;align-items:center;gap:10px}
+  .logo img{width:34px;height:34px;border-radius:9px;box-shadow:0 2px 10px rgba(236,72,153,.4)}
+  .logo b{font-size:19px;letter-spacing:4px}
+  .nav-links{display:flex;gap:26px;font-size:14px;color:var(--sub)}
+  .nav-links a:hover{color:var(--txt)}
+  @media(max-width:820px){.nav-links{display:none}}
+
+  /* hero */
+  .hero{padding:84px 0 56px;text-align:center}
+  .hero h1{font-size:clamp(34px,6vw,60px);line-height:1.12;letter-spacing:1px;font-weight:800}
+  .hero .slogan{margin-top:14px;font-size:clamp(15px,2.4vw,19px);color:var(--sub)}
+  .hero .desc{margin:22px auto 0;max-width:720px;color:var(--sub);font-size:15.5px}
+  .cta{margin-top:34px;display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+  .btn{display:inline-flex;align-items:center;gap:9px;padding:12px 22px;border-radius:12px;
+    font-size:15px;font-weight:600;transition:.18s;border:1px solid transparent;cursor:pointer}
+  .btn-primary{background:linear-gradient(95deg,var(--brand1),var(--brand3));color:#fff;box-shadow:0 8px 26px rgba(236,72,153,.35)}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(236,72,153,.5)}
+  .btn-ghost{border-color:var(--line);color:var(--txt);background:rgba(255,255,255,.03)}
+  .btn-ghost:hover{border-color:var(--brand2);color:#fff}
+  .btn svg{width:18px;height:18px}
+  .hero .meta{margin-top:22px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+
+  /* sections */
+  section{padding:58px 0}
+  .sec-title{text-align:center;font-size:clamp(24px,4vw,32px);font-weight:800}
+  .sec-sub{text-align:center;color:var(--sub);margin-top:10px;font-size:15px}
+  .grid{display:grid;gap:18px;margin-top:38px}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  @media(max-width:900px){.g3{grid-template-columns:1fr 1fr}}
+  @media(max-width:640px){.g3,.g2{grid-template-columns:1fr}}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px;transition:.2s}
+  .card:hover{transform:translateY(-3px);border-color:rgba(244,114,182,.4)}
+  .ficon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(135deg,rgba(236,72,153,.18),rgba(251,113,133,.12));border:1px solid var(--line);margin-bottom:16px}
+  .ficon svg{width:22px;height:22px;stroke:var(--brand2)}
+  .card h3{font-size:17px;margin-bottom:8px}
+  .card p{color:var(--sub);font-size:14px}
+
+  /* positioning */
+  .pos{display:grid;grid-template-columns:1.1fr .9fr;gap:34px;align-items:center}
+  @media(max-width:820px){.pos{grid-template-columns:1fr}}
+  .pos ul{list-style:none;margin-top:16px}
+  .pos li{display:flex;gap:10px;color:var(--sub);margin:11px 0;font-size:15px}
+  .pos li svg{width:20px;height:20px;stroke:var(--ok);flex-shrink:0;margin-top:2px}
+  .shot{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+  .shot .bar{display:flex;gap:7px;margin-bottom:16px}
+  .shot .bar i{width:11px;height:11px;border-radius:50%;background:#3a3a44;display:block}
+  .shot .row{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:10px;background:rgba(255,255,255,.03);margin-bottom:9px;border:1px solid var(--line)}
+  .shot .row .k{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,var(--brand1),var(--brand3));display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;font-weight:700}
+  .shot .row .t{font-size:13.5px;color:var(--txt)}
+  .shot .row .v{margin-left:auto;font-size:12px;color:var(--sub)}
+
+  /* download */
+  .dl{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:26px;display:flex;flex-direction:column;transition:.2s}
+  .dl:hover{border-color:rgba(244,114,182,.45);transform:translateY(-3px)}
+  .dl .plat{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+  .dl .plat svg{width:30px;height:30px;stroke:var(--brand2)}
+  .dl .plat h3{font-size:18px}
+  .dl .chip{font-size:12px;color:var(--faint)}
+  .dl .file{margin:16px 0 4px;font-size:13px;color:var(--sub);word-break:break-all;background:rgba(255,255,255,.03);border:1px dashed var(--line);border-radius:8px;padding:8px 10px}
+  .dl .req{font-size:12.5px;color:var(--faint);margin-bottom:16px}
+  .dl .btn{margin-top:auto;justify-content:center}
+  .note{margin-top:22px;font-size:13px;color:var(--faint);text-align:center;line-height:1.9}
+
+  /* install tabs */
+  .tabs{display:flex;gap:10px;justify-content:center;margin-top:34px}
+  .tab{padding:9px 20px;border-radius:999px;border:1px solid var(--line);color:var(--sub);cursor:pointer;font-size:14px;background:rgba(255,255,255,.02)}
+  .tab.active{background:linear-gradient(95deg,var(--brand1),var(--brand3));color:#fff;border-color:transparent}
+  .panel{display:none;margin-top:26px}
+  .panel.active{display:block}
+  .steps{max-width:820px;margin:0 auto}
+  .step{display:flex;gap:16px;padding:16px 0;border-bottom:1px solid var(--line)}
+  .step:last-child{border-bottom:none}
+  .step .n{width:30px;height:30px;flex-shrink:0;border-radius:9px;background:rgba(236,72,153,.14);border:1px solid var(--line);color:var(--brand2);display:flex;align-items:center;justify-content:center;font-weight:700}
+  .step .body{font-size:14.5px;color:var(--sub)}
+  .step .body b{color:var(--txt)}
+  code.cmd{display:inline-block;margin-top:8px;background:#0c0c12;border:1px solid var(--line);border-radius:8px;padding:8px 12px;color:#e9d5ff;font-size:13px;font-family:"SF Mono",Menlo,Consolas,monospace;user-select:all}
+  .copy{margin-left:8px;font-size:12px;color:var(--brand2);cursor:pointer;border:1px solid var(--line);border-radius:6px;padding:3px 9px;background:rgba(255,255,255,.03)}
+  .copy:hover{border-color:var(--brand2)}
+  .callout{margin-top:18px;border-radius:12px;padding:14px 16px;font-size:13.5px;border:1px solid var(--line)}
+  .callout.warn{background:rgba(251,191,36,.08);border-color:rgba(251,191,36,.3);color:#fde9b8}
+  .callout.privacy{background:rgba(52,211,153,.07);border-color:rgba(52,211,153,.28);color:#c7f4e0}
+
+  /* faq */
+  .faq{max-width:820px;margin:34px auto 0}
+  details{border:1px solid var(--line);border-radius:12px;padding:2px 18px;background:var(--card);margin-bottom:12px}
+  summary{cursor:pointer;padding:14px 0;font-weight:600;font-size:15px;list-style:none;display:flex;justify-content:space-between;align-items:center}
+  summary::-webkit-details-marker{display:none}
+  summary::after{content:"+";color:var(--brand2);font-size:20px}
+  details[open] summary::after{content:"–"}
+  details p{color:var(--sub);font-size:14px;padding:0 0 16px}
+
+  /* footer */
+  footer{border-top:1px solid var(--line);margin-top:40px;padding:46px 0 40px;background:var(--bg2)}
+  .foot{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:30px}
+  @media(max-width:760px){.foot{grid-template-columns:1fr}}
+  .foot h4{font-size:14px;margin-bottom:14px;color:var(--txt)}
+  .foot a,.foot p{color:var(--sub);font-size:13.5px;display:block;margin:8px 0}
+  .foot a:hover{color:var(--brand2)}
+  .qr{width:118px;height:118px;border-radius:10px;background:#fff;padding:6px}
+  .disclaim{margin-top:34px;padding-top:22px;border-top:1px solid var(--line);color:var(--faint);font-size:12.5px;text-align:center;line-height:1.9}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="logo" href="#top">
+      <img src="./logo.png" alt="WorkMami" />
+      <b class="brand">WorkMami</b>
+    </a>
+    <nav class="nav-links">
+      <a href="#position">定位</a>
+      <a href="#features">功能</a>
+      <a href="#download">下载</a>
+      <a href="#install">安装</a>
+      <a href="#faq">常见问题</a>
+    </nav>
+    <a class="btn btn-primary" href="#download" style="padding:9px 18px;font-size:14px">立即下载</a>
+  </div>
+</header>
+
+<a name="top"></a>
+<section class="hero wrap">
+  <div style="margin-bottom:20px"><span class="badge"><span class="dot"></span> 当前版本 v0.1.0 · macOS &amp; Windows</span></div>
+  <h1><span class="brand">WorkMami</span></h1>
+  <div class="slogan">WorkBuddy 的妈咪，稳稳接住你 🐾</div>
+  <p class="desc">一款面向 WorkBuddy 用户的桌面效率工具：多账号统一管理、把模型本地反代给第三方客户端、批量签到、猫猫旅行自动托管，再用一块 Token 看板看清每个账号的余额与用量。全部在你自己的电脑上运行。</p>
+  <div class="cta">
+    <a class="btn btn-primary" href="#download">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+      下载 WorkMami
+    </a>
+    <a class="btn btn-ghost" href="#features">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8m-4-4h8"/></svg>
+      了解功能
+    </a>
+  </div>
+  <div class="meta">
+    <span class="badge">🔒 本地运行 · 凭证加密</span>
+    <span class="badge">🍎 Apple 芯片 / Intel</span>
+    <span class="badge">🪟 Windows 绿色版</span>
+    <span class="badge">🚫 免安装 · 不上传</span>
+  </div>
+</section>
+
+<!-- 定位 -->
+<section id="position" class="wrap">
+  <div class="sec-title">WorkMami 是什么</div>
+  <div class="sec-sub">把散落在多个 WorkBuddy 账号里的额度、任务和签到，收进一个顺手的管理台</div>
+  <div class="pos" style="margin-top:40px">
+    <div>
+      <p style="color:var(--sub);font-size:15.5px">
+        WorkMami 是一款<b style="color:var(--txt)">第三方独立开发</b>的本地桌面工具，专为同时使用多个 WorkBuddy 账号、又想把这些账号的能力复用到其它客户端的重度用户打造。它不改动、不侵入 WorkBuddy 官方服务，只是在你自己的电脑上帮你把账号、额度、任务和签到管得明明白白。
+      </p>
+      <ul>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span><b style="color:var(--txt)">多账号统一掌控</b>：一个界面添加、切换、批量签到，看清每个账号的余额与积分。</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span><b style="color:var(--txt)">模型本地反代</b>：把 WorkBuddy 模型以 OpenAI 兼容接口暴露出来，接入任意支持自定义模型的客户端。</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span><b style="color:var(--txt)">日常琐事自动化</b>：签到、派猫猫旅行领奖励，后台按时巡检，还能自动降频防风控。</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span><b style="color:var(--txt)">数据尽在掌握</b>：Token 看板、用量统计、会话跨账号迁移与整库备份，透明可控。</span></li>
+      </ul>
+    </div>
+    <div class="shot" aria-hidden="true">
+      <div class="bar"><i></i><i></i><i></i></div>
+      <div class="row"><div class="k">A</div><div class="t">账号管理 · OAuth 授权添加</div><div class="v">3 个账号</div></div>
+      <div class="row"><div class="k">P</div><div class="t">本地反代 · OpenAI 兼容端点</div><div class="v">127.0.0.1:1420</div></div>
+      <div class="row"><div class="k">T</div><div class="t">猫猫旅行 · 自动托管</div><div class="v">今日已派 ✓</div></div>
+      <div class="row"><div class="k">G</div><div class="t">签到中心 · 一键批量</div><div class="v">全部完成 ✓</div></div>
+      <div class="row"><div class="k">D</div><div class="t">Token 看板 · 余额折线</div><div class="v">实时刷新</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 功能 -->
+<section id="features" class="wrap">
+  <div class="sec-title">核心功能</div>
+  <div class="sec-sub">六大模块，覆盖账号、模型、任务、数据的全流程</div>
+  <div class="grid g3">
+    <div class="card">
+      <div class="ficon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></div>
+      <h3>账号管理</h3>
+      <p>通过 OAuth 网页授权添加多个 WorkBuddy 账号，安全存储加密凭证。按昵称区分账号，一键切换、随时查看每个账号的额度与积分明细。</p>
+    </div>
+    <div class="card">
+      <div class="ficon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 00-3 3v7a3 3 0 006 0V5a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2M12 19v3"/></svg></div>
+      <h3>本地反代</h3>
+      <p>把 WorkBuddy 的模型以标准 OpenAI 兼容接口在本机反代出来，供任意支持自定义模型的客户端接入。真流式透传、智能选号、粘性会话与模型回落，长任务稳定不断流。</p>
+    </div>
+    <div class="card">
+      <div class="ficon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+      <h3>签到中心</h3>
+      <p>一键为所有账号批量签到，自动检测当日是否已签、防止重复。可开启后台定时自动签到，日常额度领取不漏一次。</p>
+    </div>
+    <div class="card">
+      <div class="ficon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z"/></svg></div>
+      <h3>猫猫旅行托管</h3>
+      <p>每天自动派猫猫出行、到站领取奖励，并清晰展示"派出于 / 奖励领于"的具体时刻。后台每 60 分钟巡检，连续确认全部账号达当日上限后自动熔断，避免高频调用触发官方限制。</p>
+    </div>
+    <div class="card">
+      <div class="ficon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg></div>
+      <h3>Token 看板</h3>
+      <p>各账号余额随时间变化的折线图、反代调用流水与用量统计，积分清单双口径归因，让你一眼看清额度都花在了哪里、哪个账号更划算。</p>
+    </div>
+    <div class="card">
+      <div class="ficon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg></div>
+      <h3>数据管理</h3>
+      <p>支持会话在账号之间迁移归属、整库备份与导出，全部数据保存在本地。换机、整理账号都能从容操作，数据始终握在自己手里。</p>
+    </div>
+  </div>
+</section>
+
+<!-- 下载 -->
+<section id="download" class="wrap">
+  <div class="sec-title">下载</div>
+  <div class="sec-sub">选择与你的设备匹配的版本 · 当前版本 v0.1.0</div>
+  <div class="grid g3">
+    <div class="dl">
+      <div class="plat">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16.7 12.9c0-2.2 1.8-3.3 1.9-3.4-1-1.5-2.6-1.7-3.2-1.7-1.4-.1-2.6.8-3.3.8-.7 0-1.7-.8-2.8-.8-1.5 0-2.8.9-3.6 2.2-1.5 2.6-.4 6.5 1.1 8.6.7 1 1.6 2.2 2.7 2.2 1.1 0 1.5-.7 2.8-.7s1.6.7 2.8.7c1.1 0 1.9-1 2.6-2.1.8-1.2 1.2-2.4 1.2-2.5-.1 0-2.3-.9-2.3-3.5zM14.5 5.9c.6-.7 1-1.7.9-2.7-.9 0-1.9.6-2.5 1.3-.5.6-1 1.6-.9 2.6 1 .1 2-.5 2.5-1.2z"/></svg>
+        <div><h3>macOS</h3><div class="chip">Apple 芯片 · M1 / M2 / M3 / M4</div></div>
+      </div>
+      <div class="file">WorkMami_0.1.0_aarch64.dmg</div>
+      <div class="req">约 9.1 MB · 需要 macOS 12 及以上</div>
+      <a class="btn btn-primary" href="https://github.com/majiabin2020/WorkMami/releases/download/v0.1.0/WorkMami_0.1.0_aarch64.dmg" download>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+        下载 DMG
+      </a>
+    </div>
+
+    <div class="dl">
+      <div class="plat">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16.7 12.9c0-2.2 1.8-3.3 1.9-3.4-1-1.5-2.6-1.7-3.2-1.7-1.4-.1-2.6.8-3.3.8-.7 0-1.7-.8-2.8-.8-1.5 0-2.8.9-3.6 2.2-1.5 2.6-.4 6.5 1.1 8.6.7 1 1.6 2.2 2.7 2.2 1.1 0 1.5-.7 2.8-.7s1.6.7 2.8.7c1.1 0 1.9-1 2.6-2.1.8-1.2 1.2-2.4 1.2-2.5-.1 0-2.3-.9-2.3-3.5zM14.5 5.9c.6-.7 1-1.7.9-2.7-.9 0-1.9.6-2.5 1.3-.5.6-1 1.6-.9 2.6 1 .1 2-.5 2.5-1.2z"/></svg>
+        <div><h3>macOS</h3><div class="chip">Intel 芯片 · 较老的 Mac</div></div>
+      </div>
+      <div class="file">WorkMami_0.1.0_x64.dmg</div>
+      <div class="req">约 9.4 MB · 需要 macOS 12 及以上</div>
+      <a class="btn btn-primary" href="https://github.com/majiabin2020/WorkMami/releases/download/v0.1.0/WorkMami_0.1.0_x64.dmg" download>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+        下载 DMG
+      </a>
+    </div>
+
+    <div class="dl">
+      <div class="plat">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5.5L10.5 4.5v7H3v-6zM3 12.5h7.5v7L3 18.5v-6zM12 4.2L21 3v8.5h-9v-7.3zM12 12.5h9V21l-9-1.2v-7.3z"/></svg>
+        <div><h3>Windows</h3><div class="chip">绿色版 · 免安装双击即用</div></div>
+      </div>
+      <div class="file">WorkMami_0.1.0_win_x64.exe</div>
+      <div class="req">约 9.7 MB · 需要 Windows 10 / 11（64 位）</div>
+      <a class="btn btn-primary" href="https://github.com/majiabin2020/WorkMami/releases/download/v0.1.0/WorkMami_0.1.0_win_x64.exe" download>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+        下载 EXE
+      </a>
+    </div>
+  </div>
+  <p class="note">
+    不确定 Mac 芯片？点左上角  → "关于本机"，显示 <b>M 开头</b>选 Apple 芯片版，显示 <b>Intel</b> 选 Intel 版。<br/>
+    如何分辨 Windows 是 32 还是 64 位？Win10/11 近年的电脑几乎都是 64 位，直接下载即可。
+  </p>
+</section>
+
+<!-- 安装 -->
+<section id="install" class="wrap">
+  <div class="sec-title">安装注意事项</div>
+  <div class="sec-sub">按平台查看安装步骤，第一次打开请按提示操作</div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="mac">🍎 macOS 安装</div>
+    <div class="tab" data-tab="win">🪟 Windows 安装</div>
+  </div>
+
+  <div class="panel active" id="panel-mac">
+    <div class="steps">
+      <div class="step"><div class="n">1</div><div class="body"><b>下载对应芯片的 .dmg</b><br/>Apple 芯片下 <code>aarch64</code>，Intel 下 <code>x64</code>。双击打开 dmg，把 <b>WorkMami</b> 图标拖进"应用程序(Applications)"文件夹。</div></div>
+      <div class="step"><div class="n">2</div><div class="body"><b>首次打开若提示"已损坏 / 无法打开"</b><br/>由于本工具未做付费签名与公证，macOS 会给下载来的 App 打上"隔离标记"。这不代表文件真的损坏，在"终端"里执行下面命令清除标记即可（<b>永久解决</b>）：
+        <div><code class="cmd" id="cmd-xattr">xattr -cr /Applications/WorkMami.app</code><span class="copy" data-copy="cmd-xattr">复制</span></div>
+        若提示权限不足，改用带 sudo 的版本：<div><code class="cmd" id="cmd-sudo">sudo xattr -rd com.apple.quarantine /Applications/WorkMami.app</code><span class="copy" data-copy="cmd-sudo">复制</span></div>
+      </div></div>
+      <div class="step"><div class="n">3</div><div class="body"><b>或：右键打开（针对"身份不明的开发者"提示）</b><br/>在"应用程序"里<b>右键点击 WorkMami → 打开 → 再点"打开"</b>，即可绕过一次性的安全提示。</div></div>
+      <div class="step"><div class="n">4</div><div class="body"><b>开始使用</b><br/>进入"账号管理"，通过 OAuth 网页授权登录并添加你的 WorkBuddy 账号即可。</div></div>
+    </div>
+    <div class="callout warn">⚠️ 只有出现"已损坏，应移到废纸篓"时才需要上面的 <code style="color:#fde9b8">xattr</code> 命令；这是未签名 App 的正常现象，命令仅清除本机隔离属性，不改动任何程序内容。</div>
+  </div>
+
+  <div class="panel" id="panel-win">
+    <div class="steps">
+      <div class="step"><div class="n">1</div><div class="body"><b>绿色单文件，免安装</b><br/>下载 <code>WorkMami_0.1.0_win_x64.exe</code>，放到任意目录（如桌面），<b>双击即可运行</b>，无需安装、不写注册表。</div></div>
+      <div class="step"><div class="n">2</div><div class="body"><b>首次运行遇到 SmartScreen 蓝屏提示</b><br/>因为未做代码签名，Windows 可能弹出"Windows 已保护你的电脑 / 未知发布者"。点击 <b>"更多信息" → "仍要运行"</b> 即可。若想彻底去掉拦截，可在 PowerShell 执行：
+        <div><code class="cmd" id="cmd-unblock">Unblock-File -Path .\WorkMami_0.1.0_win_x64.exe</code><span class="copy" data-copy="cmd-unblock">复制</span></div>
+      </div></div>
+      <div class="step"><div class="n">3</div><div class="body"><b>需要 WebView2 运行库</b><br/>Win10 / 11 通常已自带。若打开后是<b>白屏</b>，请安装 Microsoft 的 "WebView2 Evergreen Runtime" 后再打开。</div></div>
+      <div class="step"><div class="n">4</div><div class="body"><b>开始使用</b><br/>进入"账号管理"，通过 OAuth 网页授权添加你的 WorkBuddy 账号。</div></div>
+    </div>
+    <div class="callout warn">⚠️ 请从可信渠道下载并核对文件名与版本；绿色版首次运行被 SmartScreen 拦截属正常现象，确认来源后"仍要运行"即可。</div>
+  </div>
+
+  <div class="callout privacy">
+    🔒 <b>隐私说明</b>：WorkMami 完全在你本地电脑运行，所有账号凭证均以<b>加密方式</b>保存在本机数据目录（macOS：<code>~/Library/Application&nbsp;Support/WorkMami</code>；Windows：<code>%APPDATA%\WorkMami</code>），<b>不上传、不包含在安装包内</b>。分发给别人的安装包是一个空白的全新程序，绝不会带上任何人的账号数据。
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq" class="wrap">
+  <div class="sec-title">常见问题</div>
+  <div class="faq">
+    <details open><summary>反代出来的模型怎么接入其它客户端？</summary><p>在 WorkMami"代理设置"里开启本地反代服务，会得到一个 OpenAI 兼容的接口地址与 API Key。在任意支持"自定义模型 / OpenAI 兼容接口"的客户端里，填入该地址、Key 和模型名即可像调用官方模型一样使用。</p></details>
+    <details><summary>执行长任务时会不会中断？</summary><p>反代采用真流式透传，并对长连接做了专门的超时处理，长时间生成的任务不会被中途掐断。若个别请求仍异常，本机数据目录下的诊断日志会自动记录，便于排查。</p></details>
+    <details><summary>猫猫旅行会不会太频繁导致账号被限制？</summary><p>后台每 60 分钟才巡检一次；当连续确认所有账号当天都已达到派猫猫上限后，会自动熔断、当天不再轮询，尽量降低对官方接口的调用频率。</p></details>
+    <details><summary>需要 WorkBuddy 官方账号吗？收费吗？</summary><p>WorkMami 本身免费，但它管理的是你自己的 WorkBuddy 账号，使用前你需拥有并登录自己的 WorkBuddy 账号。所有额度消耗都发生在你自己的账号上。</p></details>
+    <details><summary>这是 WorkBuddy 官方软件吗？</summary><p>不是。WorkMami 是第三方独立开发的本地效率工具，与 WorkBuddy 官方无任何隶属或背书关系。请遵守 WorkBuddy 官方服务条款合理使用。</p></details>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="foot">
+      <div>
+        <a class="logo" href="#top" style="margin-bottom:14px">
+          <img src="./logo.png" alt="WorkMami" style="width:34px;height:34px;border-radius:9px"/>
+          <b class="brand" style="font-size:19px;letter-spacing:4px">WorkMami</b>
+        </a>
+        <p style="color:var(--sub);font-size:13.5px;max-width:320px">WorkBuddy 的妈咪，稳稳接住你。多账号管理 · 本地反代 · 批量签到 · 猫猫旅行托管 · Token 看板。</p>
+      </div>
+      <div>
+        <h4>快速导航</h4>
+        <a href="#position">工具定位</a>
+        <a href="#features">核心功能</a>
+        <a href="#download">下载</a>
+        <a href="#install">安装说明</a>
+        <a href="#faq">常见问题</a>
+      </div>
+      <div>
+        <h4>关于作者</h4>
+        <p style="color:var(--sub)">个人博客：www.majiabin.com</p>
+        <div style="margin-top:10px"><img class="qr" src="./wechat-qr.jpg" alt="老马公众号二维码"/></div>
+        <p style="color:var(--faint);font-size:12px;margin-top:6px">扫一扫关注老马公众号</p>
+      </div>
+    </div>
+    <div class="disclaim">
+      WorkMami 为第三方独立开发的本地工具，与 WorkBuddy 官方无关，亦未获其授权或背书。<br/>
+      本工具仅供个人学习研究使用，请在遵守 WorkBuddy 官方服务条款的前提下合理使用，一切非法用途责任自负。<br/>
+      © 2026 WorkMami · v0.1.0
+    </div>
+  </div>
+</footer>
+
+<script>
+  // 安装平台标签切换
+  document.querySelectorAll('.tab').forEach(function(t){
+    t.addEventListener('click',function(){
+      document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+      t.classList.add('active');
+      document.getElementById('panel-'+t.dataset.tab).classList.add('active');
+    });
+  });
+  // 命令一键复制
+  document.querySelectorAll('.copy').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var el=document.getElementById(btn.dataset.copy);
+      if(!el)return;
+      navigator.clipboard.writeText(el.textContent).then(function(){
+        var old=btn.textContent;btn.textContent='已复制 ✓';
+        setTimeout(function(){btn.textContent=old;},1600);
+      });
+    });
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+[package]
+name = "workmami"
+version = "0.1.0"
+description = "WorkBuddy 多账号管理与本地反代辅助工具"
+authors = ["majiabin2020"]
+edition = "2021"
+rust-version = "1.80"
+
+[lib]
+name = "workmami_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-shell = "2"
+tauri-plugin-notification = "2"
+tauri-plugin-autostart = "2"
+tauri-plugin-single-instance = "2"
+tauri-plugin-opener = "2"
+
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+tokio-stream = "0.1"
+axum = { version = "0.7", features = ["json", "macros"] }
+tower-http = { version = "0.5", features = ["cors"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "stream", "rustls-tls", "rustls-tls-native-roots"] }
+futures-util = "0.3"
+bytes = "1"
+
+# crypto
+aes-gcm = "0.10"
+hmac = "0.12"
+sha2 = "0.10"
+hkdf = "0.12"
+zeroize = { version = "1", features = ["derive"] }
+rand = "0.8"
+base64 = "0.22"
+hex = "0.4"
+
+# storage / utils
+rusqlite = { version = "0.32", features = ["bundled"] }
+keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service"] }
+zip = { version = "9", default-features = false, features = ["deflate"] }
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1", features = ["v4"] }
+dirs = "5"
+thiserror = "1"
+anyhow = "1"
+tracing = "0.1"
+tracing-subscriber = "0.3"
+urlencoding = "2"
+once_cell = "1"
+tokio-cron-scheduler = "0.10"
+hostname = "0.4"
+tauri-plugin-dialog = "2.7.3"
+
+[features]
+# 默认启用 custom-protocol（生产）；dev 时由 tauri 自动关闭
+custom-protocol = ["tauri/custom-protocol"]
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true

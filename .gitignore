@@ -1,0 +1,32 @@
+# dependencies
+node_modules/
+dist/
+
+# tauri / rust
+src-tauri/target/
+src-tauri/gen/schemas/
+
+# env / logs
+*.log
+.DS_Store
+.env
+.env.local
+
+# editor
+.vscode/
+.idea/
+
+# temp extraction artifacts
+.wbtmp/
+
+# npm cache (local build acceleration)
+.npmcache/
+
+# built installers are distributed via GitHub Releases, not committed
+website/downloads/
+
+# local runtime data (should never live inside the repo)
+*.vault
+workmami-usage.db*
+usage-debug.json
+*-debug.json
