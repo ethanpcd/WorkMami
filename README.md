@@ -134,7 +134,13 @@ cargo xwin build --release --features custom-protocol --target x86_64-pc-windows
 ## 联系
 
 - 个人博客：www.majiabin.com
-- 交流可关注公众号（见官网页脚二维码）或提 Issue
+- 交流可提 Issue，或关注公众号：
+
+<div align="center">
+  <img src="./website/wechat-qr.jpg" alt="老马公众号二维码" width="160" />
+  <br/>
+  <sub>扫一扫关注公众号</sub>
+</div>
 
 ---
 
