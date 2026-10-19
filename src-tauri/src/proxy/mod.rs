@@ -8,7 +8,7 @@ use std::sync::Arc;
 
 use axum::{
     body::{Body, Bytes},
-    extract::{Path, Request, State},
+    extract::{DefaultBodyLimit, Path, Request, State},
     http::{HeaderMap, HeaderValue, StatusCode},
     middleware::{self, Next},
     response::{IntoResponse, Response},
@@ -115,6 +115,9 @@ fn build_router(state: Arc<AppState>) -> Router {
         .route("/v1/workmami/health", get(health))
         .merge(authed)
         .with_state(state)
+        // 放宽请求体上限：axum 默认只有 2 MiB，长会话 / 大附件会被 413 拒掉。
+        // handler 用 Bytes 全量缓冲，所以这里调大而不是关掉，64 MiB 足够又不会无上限吃内存。
+        .layer(DefaultBodyLimit::max(64 * 1024 * 1024))
         .layer(
             tower_http::cors::CorsLayer::new()
                 .allow_origin(tower_http::cors::Any)

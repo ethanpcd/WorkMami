@@ -1,0 +1,47 @@
+name: build-windows
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install Rust (stable, msvc)
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+
+      - name: Check body-limit patch is present
+        shell: bash
+        run: grep -q "DefaultBodyLimit::max(64" src-tauri/src/proxy/mod.rs
+
+      - name: Install frontend deps
+        run: npm ci
+
+      - name: Build app
+        run: npx tauri build --no-bundle
+
+      - name: List build output
+        shell: bash
+        run: ls -lh src-tauri/target/release/*.exe
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: workmami-patched
+          path: src-tauri/target/release/workmami.exe
+          if-no-files-found: error
